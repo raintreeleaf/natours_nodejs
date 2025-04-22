@@ -25,6 +25,8 @@ const sendErrorDev = (err, res) => {
     message: err.message,
   });
 };
+const handleJWTExpiredError = (err) =>
+  new AppError('Your token has expired! Please log in again', 401);
 const sendErrorProd = (err, res) => {
   //operational, trusted error: send message to client
   if (err.isOperational)
@@ -61,9 +63,9 @@ module.exports = (err, req, res, next) => {
     // duplicate error is generated from mongoose db driver. Apparently the "code" property is enumerable.
     if (error.name === 'ValidationError')
       error = handleValidationErrorDB(error);
-    if (error.name === 'JsonWebTokenError') {
-      error = handleJWTError(error);
-    }
+    if (error.name === 'JsonWebTokenError') error = handleJWTError(error);
+    if (error.name === 'TokenExpiredError')
+      error = handleJWTExpiredError(error);
     sendErrorProd(error, res);
     // next();
   }
